@@ -1,0 +1,15 @@
+---
+name: "code-review-checklist"
+description: "Automated code review for syntax, security, style, and performance"
+user_invocable: true
+allowed_tools: ["file", "search"]
+license: "MIT"
+compatibility: ["vibe>=1.0.0"]
+---
+
+## Instructions
+Analyze the files at the specified path for:
+1. Syntax errors and missing imports
+2. Hardcoded secrets and SQL injection risks
+3. Naming conventions and documentation
+4. Memory leaks and inefficient algorithms

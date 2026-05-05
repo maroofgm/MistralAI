@@ -1,0 +1,7 @@
+name       = "plan-agent"
+safety     = "DESTRUCTIVE"
+agent_type = "AGENT"
+
+[tools]
+enabled = ["file", "bash", "search", "task"]
+disabled = []

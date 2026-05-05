@@ -1,0 +1,186 @@
+[models]
+active_model = "mistral-small"
+
+[models.mistral-small]
+temperature = 0.7
+thinking_level = 2
+
+[providers.mistral]
+api_base = "https://api.mistral.ai"
+api_key_env = "MISTRAL_API_KEY"
+
+[tools]
+enabled = ["bash", "file", "search"]
+
+
+# Samples Configuration
+# Model Configuration and Aliases
+[models]
+active_model = "customer-alias"
+
+[models.customer-alias]
+alias = "mistral-small"
+temperature = 0.3
+thinking_level = 3
+auto_compact_threshold = 10000
+
+[models.customer-alias.pricing]
+max_price_per_call = 0.50
+max_price_per_session = 5.00
+
+# Parameter	Description
+# alias	Actual model name this alias points to
+# temperature	Output randomness (0.0–1.0)
+# thinking_level	Reasoning depth (1–5)
+# max_price_per_session	Cost cap per session
+
+# Aliases decouple the model name in your code from the actual provider model. A team can set active_model = "prod-model" in the project config and change the underlying model without touching any other files. Pricing caps prevent unexpected costs in customer demos or CI pipelines.
+
+
+# Sample Provider Configuration
+
+[providers.mistral]
+api_base = "https://api.mistral.ai"
+api_key_env = "MISTRAL_API_KEY"
+api_style = "mistral"
+backend = "mistral"
+
+[providers.azure]
+api_base = "https://customer.openai.azure.com"
+api_key_env = "AZURE_OPENAI_KEY"
+api_style = "openai"
+backend = "openai"
+
+# api_key_env names the environment variable that holds the API key — the key itself never appears in the config file. This is the correct pattern for version-controlled configs.
+
+# Tool Configuration and Restrictions
+
+[tools]
+enabled = ["file", "search", "task"]
+disabled = ["bash"]
+
+# Security use case: Disable bash for agents running in sensitive environments. Restrict file to approved paths only.
+
+[tools.overrides.file]
+max_file_size_mb = 10
+allowed_paths = ["/tmp", "/home/user/projects"]
+
+# Performance use case: Set max_file_size_mb to prevent the agent from reading large binary files that would bloat context.
+
+
+# Environment variable: export SSL_CERT_FILE="/path/to/ca-bundle.crt" vibe
+
+# config.toml: [proxy] ssl_cert_file = "/path/to/ca-bundle.crt"
+
+# Without this setting, Vibe will fail to connect to any endpoint using a certificate signed by an internal CA. This is the most common installation blocker in enterprise environments.
+
+# [updates] - Update Settings
+enable_auto_update = true
+enable_update_checks = true
+update_channel = "stable"
+Setting	Values	Use case
+# enable_auto_update	true/false	Production: false (control rollouts). Dev: true.
+# enable_update_checks	true/false	Air-gapped: false. Otherwise: true for awareness.
+# update_channel	stable/beta	Production: stable. Testing new features: beta.
+
+# Operational Settings
+
+[session]
+auto_approve = false
+api_timeout = 60
+max_context_tokens = 16000
+
+[performance]
+auto_compact_threshold = 8000
+max_parallel_tool_calls = 3
+Setting	Recommended	Why
+
+# auto_approve	false	Safety: require explicit tool approval
+# api_timeout	60s	Prevent hung sessions on slow networks
+# max_context_tokens	16000	Balance cost and context depth
+# max_parallel_tool_calls	3	Limit concurrent tool executions
+
+# Agent Profile: Core Structure
+@ Agent profiles are TOML files stored in .vibe/agents/ (project) or ~/.vibe/agents/ (user). Minimum required fields:
+
+name = "security-audit-agent"
+display_name = "Security Audit Agent"
+description = "Read-only agent for security audits"
+safety = "SAFE"
+agent_type = "AGENT"
+
+[overrides]
+model = "mistral-small"
+temperature = 0.2
+
+# Field	Required	Description
+# name	Yes	Internal identifier (no spaces)
+# display_name	Yes	User-facing name
+# safety	Yes	Safety level (SAFE/NEUTRAL/DESTRUCTIVE/YOLO)
+# agent_type	Yes	AGENT or SUBAGENT
+
+# Safety Levels
+# Level	File Operations	Code Execution	Use Case
+# SAFE	Read-only	None	Security audits, documentation review
+# NEUTRAL	Limited write	Sandboxed	Code review, analysis, subagents
+# DESTRUCTIVE	Full access	Full access	Code refactoring, automated edits
+# YOLO	Unrestricted	Unrestricted	Research only — never in production
+
+# Tool Permission Overrides
+[tools]
+enabled = ["file", "search"]
+disabled = ["bash", "task"]
+
+[tools.overrides.file]
+max_file_size_mb = 5
+allowed_paths = ["/tmp", "/home/user/projects"]
+allowed_operations = ["read"]
+
+# Model and Parameter Overrides
+
+[overrides]
+model = "mistral-large"
+temperature = 0.1
+thinking_level = 3
+max_tokens = 4096
+
+# Parameter	Range	Guidance
+# temperature	0.0–1.0	Lower = more deterministic. Use 0.1–0.3 for analysis tasks.
+# thinking_level	1–5	Higher = deeper reasoning, more tokens, higher cost.
+# max_tokens	1024–32768	Cap output length per response. Set lower for efficiency.
+
+
+# Skill Filtering: enabled_skills / disabled_skills
+
+Use glob patterns in config.toml to allow only the skills relevant to a given environment:
+
+# .vibe/config.toml
+[skills]
+enabled_skills  = ["code-*", "security-*"]
+disabled_skills = ["*-experimental"]
+
+# Pattern type	Example	Matches
+# Glob	code-*	code-review, code-analysis
+# Regex	security-(audit|scan)	security-audit, security-scan
+# Exact	data-analysis	data-analysis only
+# Rules are evaluated in order; disabled_skills takes precedence over enabled_skills.
+
+# User-Invocable Slash Commands
+Setting user_invocable: true in YAML frontmatter exposes the skill as a /skill-name command:
+
+# User invokes the skill directly
+/security-scan --path ./src --severity high
+
+# The skill runs its instructions using allowed_tools
+# and returns output in the conversation
+
+# Component	Description	Example
+# Command	Skill name with leading slash	/security-scan
+# Arguments	Named or positional params	--path ./src
+# Flags	Modifier options	--severity high
+
+# Agent Integration & Skill Distribution
+Agents invoke skills via the task tool — no custom code needed:
+
+# Agent invoking a skill
+task("Run code-review-checklist on ./src directory")

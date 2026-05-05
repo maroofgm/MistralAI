@@ -1,0 +1,13 @@
+[session]
+auto_resume = true
+save_frequency = 30
+
+[proxy]
+http_proxy = "${HTTP_PROXY}"
+https_proxy = "${HTTPS_PROXY}"
+
+[model]
+default = "mistral-large"
+
+[skills]
+enabled_skills = ["code-*", "security-*"]

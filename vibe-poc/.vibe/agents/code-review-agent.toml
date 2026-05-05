@@ -1,0 +1,7 @@
+name       = "code-review-agent"
+safety     = "SAFE"
+agent_type = "AGENT"
+
+[tools]
+enabled  = ["file", "search"]
+disabled = ["bash", "write"]
