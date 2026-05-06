@@ -1,0 +1,12 @@
+name: Vibe Code Review
+on: [push, pull_request]
+jobs:
+  code-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Vibe code review
+        run: |
+          vibe --prompt "Run code-review-checklist on ./src" \
+               --output json \
+               --agent code-review-agent

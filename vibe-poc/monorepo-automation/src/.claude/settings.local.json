@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\('mammoth'\\); require\\('xlsx'\\); console.log\\('OK'\\)\")",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
